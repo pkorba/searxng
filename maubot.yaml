@@ -1,0 +1,10 @@
+maubot: 0.1.0
+id: com.github.pkorba.searxng
+version: 1.0.0
+license: MIT
+modules:
+  - searxng
+dependencies:
+  - brotli >= 1.1.0
+  - filetype >= 1.2.0
+main_class: SearxngBot
