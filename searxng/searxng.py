@@ -224,8 +224,8 @@ class SearxngBot(Plugin):
             body += f"> > **{data.metadata}**  \n"
             html += f"<blockquote><b>{data.metadata}</b></blockquote>"
         if data.content:
-            body += f">  \n> {data.content}  \n"
-            html += f"<p>{data.content}</p>"
+            body += f">  \n> {data.content}{"..." if not data.content.endswith((".", "!", "?")) else ""}  \n"
+            html += f"<p>{data.content}{"..." if not data.content.endswith((".", "!", "?")) else ""}</p>"
         # Map content
         if data.links:
             links = "  \n".join([f"> > {link.label}: [{link.url_label}]({link.url})" for link in data.links])
