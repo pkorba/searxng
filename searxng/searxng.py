@@ -27,7 +27,7 @@ class SearxngBot(Plugin):
         "Sec-GPC": "1",
         "accept-encoding": "gzip, deflate, br, zstd",
         "accept-language": "en,en-US;q=0.5",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
     }
 
     async def start(self) -> None:
@@ -78,7 +78,9 @@ class SearxngBot(Plugin):
     async def parse_json(self, data: Any) -> SearchData | None:
         if data and data.get("results", None):
             result = data["results"][0]
-            engine = result.get("engine", "").replace(".", " ")
+            engine = result.get("engine", "")
+            if engine:
+                engine = engine.replace(".", " ")
             links: list[LinkData] = []
             if result.get("links", []):
                 for li in result["links"]:
@@ -99,13 +101,19 @@ class SearxngBot(Plugin):
                     country=result["address"].get("country", "")
                 )
             length = result.get("length", "")
-            if type(length) != str:
+            if length and type(length) is not str:
                 length = str(strftime("%H:%M:%S", gmtime(length)))
 
             parsed_url = result.get("parsed_url", [])
             torrentfile = result.get("torrentfile", "")
             if torrentfile and len(parsed_url) >= 2:
                 torrentfile = urlunsplit(parsed_url[:2] + [torrentfile] + [""] * 2)
+            seed = result.get("seed", "")
+            if seed is not None:
+                seed = str(seed)
+            leech = result.get("leech", "")
+            if leech is not None:
+                leech = str(leech)
             return SearchData(
                 url=result.get("url", ""),
                 links=links,
@@ -120,8 +128,8 @@ class SearxngBot(Plugin):
                 views=result.get("views", ""),
                 length=length,
                 metadata=result.get("metadata", ""),
-                seed=str(result.get("seed", "")),
-                leech=str(result.get("leech", "")),
+                seed=seed,
+                leech=leech,
                 magnetlink=result.get("magnetlink", ""),
                 torrentfile=torrentfile,
                 filesize=result.get("filesize", ""),
@@ -131,6 +139,8 @@ class SearxngBot(Plugin):
         return None
 
     async def translate_engine(self, name: str) -> str:
+        if not name:
+            return ""
         name_parts = name.split()
         for i in range(0, len(name_parts)):
             name_parts[i] = engines.engine_dict.get(name_parts[i], name_parts[i].title())
@@ -231,7 +241,7 @@ class SearxngBot(Plugin):
             links = "  \n".join([f"> > {link.label}: [{link.url_label}]({link.url})" for link in data.links])
             body += f"> > **Links:**  \n{links}  \n"
             links = "<br>".join([f"{link.label}: <a href=\"{link.url}\">{link.url_label}</a>" for link in data.links])
-            html += (f"<blockquote><b>Links:</b><br>{links}</blockquote>")
+            html += f"<blockquote><b>Links:</b><br>{links}</blockquote>"
         if data.address:
             body += f"> > **Address:**  \n> > {data.address.name}  \n"
             html += (
