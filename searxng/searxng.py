@@ -134,7 +134,17 @@ class SearxngBot(Plugin):
                 torrentfile=torrentfile,
                 filesize=result.get("filesize", ""),
                 address=address,
-                pdf_url=result.get("pdf_url", "")
+                pdf_url=result.get("pdf_url", ""),
+                doi=result.get("doi", ""),
+                journal=result.get("journal", ""),
+                issn=result.get("issn", []),
+                comment=result.get("comment", ""),
+                maintainer=result.get("maintainer", ""),
+                license_name=result.get("license_name", ""),
+                license_url=result.get("license_url", ""),
+                homepage=result.get("homepage", ""),
+                source_code_url=result.get("source_code_url", ""),
+                package_name=result.get("package_name", "")
             )
         return None
 
@@ -183,13 +193,14 @@ class SearxngBot(Plugin):
         :return: final message
         """
         pub_date = data.published_date.split("T")[0] if data.published_date else ""
+        url_trimmed = data.url if len(data.url) < 70 else f'{data.url[:70]}...'
         body = (
-            f"> `{data.url if len(data.url) < 70 else f'{data.url[:70]}...'}`  \n"
+            f"> `{url_trimmed}`  \n"
             f"> [**{data.title}**]({data.url})  \n"
         )
         html = (
             f"<blockquote><table><tr><td>"
-            f"<sub><code>{data.url if len(data.url) < 70 else f'{data.url[:70]}...'}</code></sub><br>"
+            f"<sub><code>{url_trimmed}</code></sub><br>"
             f"<b><a href=\"{data.url}\">{data.title}</a></b>"
         )
         # Videos, news etc.
@@ -202,19 +213,30 @@ class SearxngBot(Plugin):
         if data.views:
             body += f"> > **Views:** {data.views}  \n"
             html += f"<blockquote><b>Views:</b> {data.views}</blockquote>"
-        if data.publisher:
-            body += f"> > **Publisher:** {data.publisher}  \n"
-            html += f"<blockquote><b>Publisher:</b> {data.publisher}</blockquote>"
         if data.author:
             body += f"> > **Author:** {data.author}  \n"
             html += f"<blockquote><b>Author:</b> {data.author}</blockquote>"
         if data.authors:
             body += f"> > **Authors:** {", ".join(data.authors)}  \n"
             html += f"<blockquote><b>Authors:</b> {", ".join(data.authors)}</blockquote>"
+        if data.publisher:
+            body += f"> > **Publisher:** {data.publisher}  \n"
+            html += f"<blockquote><b>Publisher:</b> {data.publisher}</blockquote>"
+        # Publications
+        if data.journal:
+            body += f"> > **Journal:** {data.journal}  \n"
+            html += f"<blockquote><b>Journal:</b> {data.journal}</blockquote>"
+        if data.doi:
+            body += f"> > **Digital Identifier:** [{data.doi}](https://oadoi.org/{data.doi})"
+            html += f"<blockquote><b>Digital Identifier:</b> <a href=\"https://oadoi.org/{data.doi}\">{data.doi}</a></blockquote>"
+        if data.issn:
+            body += f"> > **ISSN:** {", ".join(data.issn)}  \n"
+            html += f"<blockquote><b>ISSN:</b> {", ".join(data.issn)}</blockquote>"
         # File content
         if data.seed or data.leech:
-            body += f"> > **Seeders/Leechers:** {data.seed if data.seed else 'N/A'}/{data.leech if data.leech else 'N/A'}  \n"
-            html += f"<blockquote><b>Seeders/Leechers:</b> {data.seed if data.seed else 'N/A'}/{data.leech if data.leech else 'N/A'}</blockquote>"
+            seeders_leechers = f"{data.seed if data.seed else 'N/A'}/{data.leech if data.leech else 'N/A'}"
+            body += f"> > **Seeders/Leechers:** {seeders_leechers}  \n"
+            html += f"<blockquote><b>Seeders/Leechers:</b> {seeders_leechers}</blockquote>"
         if data.filesize:
             body += f"> > **Size:** {data.filesize}  \n"
             html += f"<blockquote><b>Size:</b> {data.filesize}</blockquote>"
@@ -229,13 +251,47 @@ class SearxngBot(Plugin):
                 html += f"<b><a href=\"{data.magnetlink}\">🧲 Magnet</a></b>"
             body += "  \n"
             html += f"</blockquote>"
+        # Repository content
+        if data.package_name:
+            body += f"> > **Name:** {data.package_name}  \n"
+            html += f"<blockquote><b>Name:</b> {data.package_name}</blockquote>"
+        if data.maintainer:
+            body += f"> > **Maintainer:** {data.maintainer}  \n"
+            html += f"<blockquote><b>Maintainer:</b> {data.maintainer}</blockquote>"
+        if data.homepage or data.source_code_url:
+            project_body = ""
+            project_html = ""
+            if data.homepage:
+                project_body += f"[Homepage]({data.homepage})"
+                project_html += f"<a href=\"{data.homepage}\">Homepage</a>"
+            if data.source_code_url:
+                if project_body:
+                    project_body += " | "
+                    project_html += " | "
+                project_body += f"[Source code]({data.source_code_url})"
+                project_html += f"<a href=\"{data.source_code_url}\">Source code</a>"
+            body += f"> > **Project:** {project_body}  \n"
+            html += f"<blockquote><b>Project:</b> {project_html}</blockquote>"
+        if data.license_name:
+            if data.license_url:
+                license_body = f"[{data.license_name}]({data.license_url})"
+                license_html = f"<a href=\"{data.license_url}\">{data.license_name}</a>"
+            else:
+                license_body = data.license_name
+                license_html = data.license_name
+            body += f"> > **License:** {license_body}  \n"
+            html += f"<blockquote><b>License:</b> {license_html}</blockquote>"
         # Universal description
         if data.metadata:
             body += f"> > **{data.metadata}**  \n"
             html += f"<blockquote><b>{data.metadata}</b></blockquote>"
         if data.content:
-            body += f">  \n> {data.content}{"..." if not data.content.endswith((".", "!", "?")) else ""}  \n"
-            html += f"<p>{data.content}{"..." if not data.content.endswith((".", "!", "?")) else ""}</p>"
+            content = f"{data.content}{"..." if not data.content.endswith((".", "!", "?")) else ""}"
+            body += f">  \n> {content}  \n"
+            html += f"<p>{content}</p>"
+        if data.comment:
+            body += f">  \n> *{data.comment}*  \n"
+            html += f"<p><i>{data.comment}</i></p>"
         # Map content
         if data.links:
             links = "  \n".join([f"> > {link.label}: [{link.url_label}]({link.url})" for link in data.links])

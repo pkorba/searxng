@@ -40,3 +40,13 @@ class SearchData:
     filesize: str
     address: AddressData
     pdf_url: str
+    doi: str
+    journal: str
+    issn: list[str]
+    comment: str
+    maintainer: str
+    license_name: str
+    license_url: str
+    homepage: str
+    source_code_url: str
+    package_name: str

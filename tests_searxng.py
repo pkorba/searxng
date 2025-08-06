@@ -134,6 +134,19 @@ class TestSearxngBot(unittest.IsolatedAsyncioTestCase):
                     ],
                     "thumbnail": "https://upload.example.com/image.jpg",
                     "metadata": "metadata",
+                    "journal": "journal",
+                    "doi": "69.2137/jp2.2137",
+                    "issn": [
+                        "2137-2137",
+                        "4242-6969"
+                    ],
+                    "comments": "comments",
+                    "package_name": "packagename",
+                    "maintainer": "maintainer",
+                    "license_name": "MIT License",
+                    "license_url": "https://example.com/licenses/MIT.html",
+                    "homepage": "https://example.com",
+                    "source_code_url": "https://example.com/example/example.git",
                 }
             ]
         }
@@ -176,6 +189,15 @@ class TestSearxngBot(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.filesize, "10.0 GiB")
         self.assertEqual(result.address, address)
         self.assertEqual(result.pdf_url, "http://example.com/pdf/123abc")
+        self.assertEqual(result.journal, "journal")
+        self.assertEqual(result.doi, "69.2137/jp2.2137")
+        self.assertEqual(result.issn, ["2137-2137", "4242-6969"])
+        self.assertEqual(result.package_name, "packagename")
+        self.assertEqual(result.maintainer, "maintainer")
+        self.assertEqual(result.license_name, "MIT License")
+        self.assertEqual(result.license_url, "https://example.com/licenses/MIT.html")
+        self.assertEqual(result.homepage, "https://example.com")
+        self.assertEqual(result.source_code_url, "https://example.com/example/example.git")
 
     async def test_parse_json_when_data_does_not_exists_return_empty_SearchData(self):
         # Arrange
@@ -213,6 +235,16 @@ class TestSearxngBot(unittest.IsolatedAsyncioTestCase):
                     "links": [],
                     "thumbnail": None,
                     "metadata": None,
+                    "journal": None,
+                    "doi": None,
+                    "issn": [],
+                    "comments": None,
+                    "package_name": None,
+                    "maintainer": None,
+                    "license_name": None,
+                    "license_url": None,
+                    "homepage": None,
+                    "source_code_url": None,
                 }
             ]
         }
@@ -251,6 +283,15 @@ class TestSearxngBot(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.filesize, None)
         self.assertEqual(result.address, address)
         self.assertEqual(result.pdf_url, None)
+        self.assertEqual(result.journal, None)
+        self.assertEqual(result.doi, None)
+        self.assertEqual(result.issn, [])
+        self.assertEqual(result.package_name, None)
+        self.assertEqual(result.maintainer, None)
+        self.assertEqual(result.license_name, None)
+        self.assertEqual(result.license_url, None)
+        self.assertEqual(result.homepage, None)
+        self.assertEqual(result.source_code_url, None)
 
     async def test_parse_json_when_no_results_return_None(self):
         # Arrange
@@ -401,6 +442,16 @@ class TestSearxngBot(unittest.IsolatedAsyncioTestCase):
             filesize="30000",
             address=None,
             pdf_url="pdfurl",
+            doi="2137",
+            journal="journal",
+            issn=["2137", "42"],
+            comment="comment",
+            maintainer="maintainer",
+            license_name="license_name",
+            license_url="http://example.com",
+            homepage="http://example.com",
+            source_code_url="http://example.com",
+            package_name="package_name",
         )
 
         # Act
