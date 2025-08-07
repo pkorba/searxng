@@ -1,6 +1,6 @@
 # SearXNG Bot
 
-A maubot for Matrix messaging that performs a web search on user's behalf using SearXNG and responds with the best matching result. It requires an access to SearXNG instance that exposes its JSON API. SearXNG is a free internet metasearch engine which aggregates results from up to 247 [search services](https://docs.searxng.org/user/configured_engines.html). This plugin supports [!bang syntax](https://docs.searxng.org/user/search-syntax.html#search-syntax) (except external bangs and automatic redirect) so it reduces the need for service specific plugins. 
+A maubot plugin for Matrix messaging that performs a web search on user's behalf using SearXNG and responds with the best matching result. It requires an access to SearXNG instance that exposes its JSON API. SearXNG is a free internet metasearch engine which aggregates results from up to 248 [search services](https://docs.searxng.org/user/configured_engines.html). This plugin supports [!bang syntax](https://docs.searxng.org/user/search-syntax.html#search-syntax) (except external bangs and automatic redirect) so it reduces the need for service specific plugins. 
 
 ![bot_searxng](https://github.com/user-attachments/assets/ddb5d7fe-10ae-4c68-bf8b-cab86ad7b955)
 
