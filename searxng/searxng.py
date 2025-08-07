@@ -193,10 +193,12 @@ class SearxngBot(Plugin):
         :return: final message
         """
         pub_date = data.published_date.split("T")[0] if data.published_date else ""
-        url_trimmed = data.url if len(data.url) < 70 else f'{data.url[:70]}...'
+        url_trimmed = data.url
+        if data.url and len(data.url) >= 70:
+            url_trimmed = f"{data.url[:70]}..."
         body = (
             f"> `{url_trimmed}`  \n"
-            f"> [**{data.title}**]({data.url})  \n"
+            f"> [**{data.title}**]({data.url})  \n>  \n"
         )
         html = (
             f"<blockquote><table><tr><td>"
@@ -205,40 +207,40 @@ class SearxngBot(Plugin):
         )
         # Videos, news etc.
         if pub_date:
-            body += f"> {pub_date}  \n"
+            body += f"> {pub_date}  \n>  \n"
             html += f"<p><sub>{pub_date}</sub></p>"
         if data.length:
-            body += f"> > **Length:** {data.length}  \n"
+            body += f"> > **Length:** {data.length}  \n>  \n"
             html += f"<blockquote><b>Length:</b> {data.length}</blockquote>"
         if data.views:
-            body += f"> > **Views:** {data.views}  \n"
+            body += f"> > **Views:** {data.views}  \n>  \n"
             html += f"<blockquote><b>Views:</b> {data.views}</blockquote>"
         if data.author:
-            body += f"> > **Author:** {data.author}  \n"
+            body += f"> > **Author:** {data.author}  \n>  \n"
             html += f"<blockquote><b>Author:</b> {data.author}</blockquote>"
         if data.authors:
-            body += f"> > **Authors:** {", ".join(data.authors)}  \n"
+            body += f"> > **Authors:** {", ".join(data.authors)}  \n>  \n"
             html += f"<blockquote><b>Authors:</b> {", ".join(data.authors)}</blockquote>"
         if data.publisher:
-            body += f"> > **Publisher:** {data.publisher}  \n"
+            body += f"> > **Publisher:** {data.publisher}  \n>  \n"
             html += f"<blockquote><b>Publisher:</b> {data.publisher}</blockquote>"
         # Publications
         if data.journal:
-            body += f"> > **Journal:** {data.journal}  \n"
+            body += f"> > **Journal:** {data.journal}  \n>  \n"
             html += f"<blockquote><b>Journal:</b> {data.journal}</blockquote>"
         if data.doi:
-            body += f"> > **Digital Identifier:** [{data.doi}](https://oadoi.org/{data.doi})"
+            body += f"> > **Digital Identifier:** [{data.doi}](https://oadoi.org/{data.doi})  \n>  \n"
             html += f"<blockquote><b>Digital Identifier:</b> <a href=\"https://oadoi.org/{data.doi}\">{data.doi}</a></blockquote>"
         if data.issn:
-            body += f"> > **ISSN:** {", ".join(data.issn)}  \n"
+            body += f"> > **ISSN:** {", ".join(data.issn)}  \n>  \n"
             html += f"<blockquote><b>ISSN:</b> {", ".join(data.issn)}</blockquote>"
         # File content
         if data.seed or data.leech:
             seeders_leechers = f"{data.seed if data.seed else 'N/A'}/{data.leech if data.leech else 'N/A'}"
-            body += f"> > **Seeders/Leechers:** {seeders_leechers}  \n"
+            body += f"> > **Seeders/Leechers:** {seeders_leechers}  \n>  \n"
             html += f"<blockquote><b>Seeders/Leechers:</b> {seeders_leechers}</blockquote>"
         if data.filesize:
-            body += f"> > **Size:** {data.filesize}  \n"
+            body += f"> > **Size:** {data.filesize}  \n>  \n"
             html += f"<blockquote><b>Size:</b> {data.filesize}</blockquote>"
         if data.magnetlink or data.torrentfile:
             body += "> > "
@@ -249,14 +251,14 @@ class SearxngBot(Plugin):
             if data.magnetlink:
                 body += f"[**🧲 Magnet**]({data.magnetlink})"
                 html += f"<b><a href=\"{data.magnetlink}\">🧲 Magnet</a></b>"
-            body += "  \n"
+            body += "  \n>  \n"
             html += f"</blockquote>"
         # Repository content
         if data.package_name:
-            body += f"> > **Name:** {data.package_name}  \n"
+            body += f"> > **Name:** {data.package_name}  \n>  \n"
             html += f"<blockquote><b>Name:</b> {data.package_name}</blockquote>"
         if data.maintainer:
-            body += f"> > **Maintainer:** {data.maintainer}  \n"
+            body += f"> > **Maintainer:** {data.maintainer}  \n>  \n"
             html += f"<blockquote><b>Maintainer:</b> {data.maintainer}</blockquote>"
         if data.homepage or data.source_code_url:
             project_body = ""
@@ -270,7 +272,7 @@ class SearxngBot(Plugin):
                     project_html += " | "
                 project_body += f"[Source code]({data.source_code_url})"
                 project_html += f"<a href=\"{data.source_code_url}\">Source code</a>"
-            body += f"> > **Project:** {project_body}  \n"
+            body += f"> > **Project:** {project_body}  \n>  \n"
             html += f"<blockquote><b>Project:</b> {project_html}</blockquote>"
         if data.license_name:
             if data.license_url:
@@ -279,43 +281,44 @@ class SearxngBot(Plugin):
             else:
                 license_body = data.license_name
                 license_html = data.license_name
-            body += f"> > **License:** {license_body}  \n"
+            body += f"> > **License:** {license_body}  \n>  \n"
             html += f"<blockquote><b>License:</b> {license_html}</blockquote>"
         # Universal description
         if data.metadata:
-            body += f"> > **{data.metadata}**  \n"
+            body += f"> > **{data.metadata}**  \n>  \n"
             html += f"<blockquote><b>{data.metadata}</b></blockquote>"
         if data.content:
             content = f"{data.content}{"..." if not data.content.endswith((".", "!", "?")) else ""}"
-            body += f">  \n> {content}  \n"
+            body += f"> {content}  \n>  \n"
             html += f"<p>{content}</p>"
         if data.comment:
-            body += f">  \n> *{data.comment}*  \n"
+            body += f"> *{data.comment}*  \n>  \n"
             html += f"<p><i>{data.comment}</i></p>"
         # Map content
         if data.links:
             links = "  \n".join([f"> > {link.label}: [{link.url_label}]({link.url})" for link in data.links])
-            body += f"> > **Links:**  \n{links}  \n"
+            body += f"> > **Links:**  \n{links}  \n>  \n"
             links = "<br>".join([f"{link.label}: <a href=\"{link.url}\">{link.url_label}</a>" for link in data.links])
             html += f"<blockquote><b>Links:</b><br>{links}</blockquote>"
         if data.address:
-            body += f"> > **Address:**  \n> > {data.address.name}  \n"
+            body += f"> > **Address:**  \n> > {data.address.name if data.address.name else ''}  \n"
             html += (
                 f"<blockquote><b>Address:</b><br>"
-                f"{data.address.name}<br>"
+                f"{data.address.name if data.address.name else ''}<br>"
             )
             if data.address.road:
-                body += f"> > {data.address.road} {data.address.house_number}  \n"
-                html += f"{data.address.road} {data.address.house_number}<br>"
+                body += f"> > {data.address.road} {data.address.house_number if data.address.house_number else ''}  \n"
+                html += f"{data.address.road} {data.address.house_number if data.address.house_number else ''}<br>"
             if data.address.locality:
-                body += f"> > {data.address.locality} {data.address.postcode}  \n"
-                html += f"{data.address.locality} {data.address.postcode}<br>"
+                body += f"> > {data.address.locality} {data.address.postcode if data.address.postcode else ''}  \n"
+                html += f"{data.address.locality} {data.address.postcode if data.address.postcode else ''}<br>"
             if data.address.country:
                 body += f"> > {data.address.country}  \n"
                 html += f"{data.address.country}"
+            body += ">  \n"
             html += f"</blockquote>"
         if data.pdf_url:
-            body += f"> [**PDF**]({data.pdf_url})  \n"
+            body += f"> [**PDF**]({data.pdf_url})  \n>  \n"
             html += f"<br><b><a href=\"{data.pdf_url}\">PDF</a></b>"
         html += f"</td>"
         # Picture
@@ -325,7 +328,7 @@ class SearxngBot(Plugin):
                 f"<img src=\"{data.thumbnail}\" height=\"150\" />"
                 f"</td>"
             )
-        body += f">  \n> **Results from {data.engine}**"
+        body += f"> **Results from {data.engine}**"
         html += (
             f"</tr>"
             f"</table>"

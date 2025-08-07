@@ -32,8 +32,8 @@ class TestSearxngBot(unittest.IsolatedAsyncioTestCase):
     async def asyncTearDown(self):
         await self.session.close()
 
-    async def create_resp(self, status_code=200, json=None, resp_bytes=None, content_type=None, content_length=0):
-        resp = AsyncMock(status_code=status_code, content_type=content_type, content_length=content_length)
+    async def create_resp(self, status_code=200, json=None, resp_bytes=None):
+        resp = AsyncMock(status_code=status_code)
         resp.json.return_value = json
         resp.read.return_value = resp_bytes
         return resp
@@ -66,10 +66,12 @@ class TestSearxngBot(unittest.IsolatedAsyncioTestCase):
         self.bot.http.get = AsyncMock(side_effect=aiohttp.ClientError)
 
         # Act
-        json_response = await self.bot.get_result("query")
+        with self.assertLogs(self.bot.log, level='ERROR') as logger:
+            json_response = await self.bot.get_result("query")
 
-        # Assert
-        self.assertEqual(json_response, "")
+            # Assert
+            self.assertEqual(['ERROR:testlogger:Connection failed: '], logger.output)
+            self.assertEqual(json_response, "")
 
     async def test_parse_json_when_data_exists_return_SearchData(self):
         # Arrange
@@ -389,10 +391,12 @@ class TestSearxngBot(unittest.IsolatedAsyncioTestCase):
         self.bot.http.get = AsyncMock(return_value=await self.create_resp(200, resp_bytes=archive))
 
         # Act
-        result = await self.bot.get_thumbnail_url("https://example.com/test.zip")
+        with self.assertLogs(self.bot.log, level='ERROR') as logger:
+            result = await self.bot.get_thumbnail_url("https://example.com/test.zip")
 
-        # Assert
-        self.assertEqual(result, "")
+            # Assert
+            self.assertEqual(['ERROR:testlogger:Downloaded file is not an image'], logger.output)
+            self.assertEqual(result, "")
 
     async def test_get_thumbnail_url_when_unknown_content_type_return_empty_string(self):
         # Arrange
@@ -401,23 +405,31 @@ class TestSearxngBot(unittest.IsolatedAsyncioTestCase):
         self.bot.http.get = AsyncMock(return_value=await self.create_resp(200, resp_bytes=text))
 
         # Act
-        result = await self.bot.get_thumbnail_url("https://example.com/unknown")
+        with self.assertLogs(self.bot.log, level='ERROR') as logger:
+            result = await self.bot.get_thumbnail_url("https://example.com/unknown")
 
-        # Assert
-        self.assertEqual(result, "")
+            # Assert
+            self.assertEqual(['ERROR:testlogger:Failed to determine file type'], logger.output)
+            self.assertEqual(result, "")
 
     async def test_get_thumbnail_url_when_error_return_empty_string(self):
         # Arrange
-        errors = [aiohttp.ClientError, Exception, ValueError, MatrixResponseError("test")]
-        for error in errors:
-            with self.subTest(error=error):
+        errors = (
+            (aiohttp.ClientError, "Downloading image - connection failed: "),
+            (Exception, "Uploading image to Matrix server - unknown error: "),
+            (ValueError, "Uploading image to Matrix server - unknown error: "),
+            (MatrixResponseError("test"), "Uploading image to Matrix server - unknown error: test"))
+        for error, log_message in errors:
+            with self.subTest(error=error, log_message=log_message):
                 self.bot.http.get = AsyncMock(side_effect=error)
 
                 # Act
-                result = await self.bot.get_thumbnail_url("https://example.com/image.png")
+                with self.assertLogs(self.bot.log, level='ERROR') as logger:
+                    result = await self.bot.get_thumbnail_url("https://example.com/image.png")
 
-                # Assert
-                self.assertEqual(result, "")
+                    # Assert
+                    self.assertEqual([f"ERROR:testlogger:{log_message}"], logger.output)
+                    self.assertEqual(result, "")
 
     async def test_prepare_message_return_TextMessageEventContent(self):
         # Arrange
@@ -462,6 +474,51 @@ class TestSearxngBot(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.msgtype, MessageType.NOTICE)
         self.assertIn("http://example.com", result.body)
         self.assertIn("http://example.com", result.formatted_body)
+
+    async def test_prepare_message_when_empty_SearchData_do_not_raise(self):
+        # Arrange
+        search_data = SearchData(
+            url=None,
+            links=[],
+            content=None,
+            title=None,
+            engine=None,
+            published_date=None,
+            thumbnail=None,
+            publisher=None,
+            author=None,
+            authors=[],
+            views=None,
+            length=None,
+            metadata=None,
+            seed=None,
+            leech=None,
+            magnetlink=None,
+            torrentfile=None,
+            filesize=None,
+            address=None,
+            pdf_url=None,
+            doi=None,
+            journal=None,
+            issn=[],
+            comment=None,
+            maintainer=None,
+            license_name=None,
+            license_url=None,
+            homepage=None,
+            source_code_url=None,
+            package_name=None,
+        )
+
+        # Act
+        try:
+            result = await self.bot.prepare_message(search_data)
+        except Exception as e:
+            self.fail(e)
+
+        # Assert
+        self.assertIsInstance(result, TextMessageEventContent)
+        self.assertEqual(result.msgtype, MessageType.NOTICE)
 
     async def test_get_address(self):
         # Arrange
