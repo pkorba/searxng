@@ -412,16 +412,32 @@ class TestSearxngBot(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(['ERROR:testlogger:Failed to determine file type'], logger.output)
             self.assertEqual(result, "")
 
+    async def test_get_thumbnail_url_when_aiohttp_ClientError_return_empty_string(self):
+        # Arrange
+        self.bot.http.get = AsyncMock(side_effect=aiohttp.ClientError)
+
+        # Act
+        with self.assertLogs(self.bot.log, level='ERROR') as logger:
+            response = await self.bot.get_thumbnail_url("https://example.com/image.png")
+
+            # Assert
+            self.assertEqual(['ERROR:testlogger:Downloading image - connection failed: '], logger.output)
+            self.assertEqual(response, "")
+
     async def test_get_thumbnail_url_when_error_return_empty_string(self):
         # Arrange
+        # white 10x10 png rectangle
+        image = (b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\n\x00\x00\x00\n\x08\x06\x00\x00\x00\x8d2\xcf\xbd\x00'
+                 b'\x00\x00\tpHYs\x00\x00\x0e\xc4\x00\x00\x0e\xc4\x01\x95+\x0e\x1b\x00\x00\x00\x18IDAT\x18\x95c\xfc\xff'
+                 b'\xff\xff\x7f\x06"\x00\x131\x8aF\x15RO!\x00i\x9a\x04\x10\x8a\x8d\x0bh\x00\x00\x00\x00IEND\xaeB`\x82')
+        self.bot.http.get = AsyncMock(return_value=await self.create_resp(200, resp_bytes=image))
         errors = (
-            (aiohttp.ClientError, "Downloading image - connection failed: "),
             (Exception, "Uploading image to Matrix server - unknown error: "),
             (ValueError, "Uploading image to Matrix server - unknown error: "),
             (MatrixResponseError("test"), "Uploading image to Matrix server - unknown error: test"))
         for error, log_message in errors:
             with self.subTest(error=error, log_message=log_message):
-                self.bot.http.get = AsyncMock(side_effect=error)
+                self.bot.client.upload_media = AsyncMock(side_effect=error)
 
                 # Act
                 with self.assertLogs(self.bot.log, level='ERROR') as logger:
