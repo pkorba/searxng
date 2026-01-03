@@ -101,7 +101,7 @@ class SearxngBot(Plugin):
                     country=result["address"].get("country", "")
                 )
             length = result.get("length", "")
-            if length and type(length) is not str:
+            if length and not isinstance(length, str):
                 length = str(strftime("%H:%M:%S", gmtime(length)))
 
             parsed_url = result.get("parsed_url", [])
@@ -152,8 +152,8 @@ class SearxngBot(Plugin):
         if not name:
             return ""
         name_parts = name.split()
-        for i in range(0, len(name_parts)):
-            name_parts[i] = engines.engine_dict.get(name_parts[i], name_parts[i].title())
+        for i, part in enumerate(name_parts):
+            name_parts[i] = engines.engine_dict.get(part, part.title())
         return " ".join(name_parts)
 
     async def get_thumbnail_url(self, url: str) -> str:
@@ -244,7 +244,7 @@ class SearxngBot(Plugin):
             html += f"<blockquote><b>Size:</b> {data.filesize}</blockquote>"
         if data.magnetlink or data.torrentfile:
             body += "> > "
-            html += f"<blockquote>"
+            html += "<blockquote>"
             if data.torrentfile:
                 body += f"[**⬇️ Torrent**]({data.torrentfile}) "
                 html += f"<b><a href=\"{data.torrentfile}\">⬇️ Torrent</a></b> "
@@ -252,7 +252,7 @@ class SearxngBot(Plugin):
                 body += f"[**🧲 Magnet**]({data.magnetlink})"
                 html += f"<b><a href=\"{data.magnetlink}\">🧲 Magnet</a></b>"
             body += "  \n>  \n"
-            html += f"</blockquote>"
+            html += "</blockquote>"
         # Repository content
         if data.package_name:
             body += f"> > **Name:** {data.package_name}  \n>  \n"
@@ -316,11 +316,11 @@ class SearxngBot(Plugin):
                 body += f"> > {data.address.country}  \n"
                 html += f"{data.address.country}"
             body += ">  \n"
-            html += f"</blockquote>"
+            html += "</blockquote>"
         if data.pdf_url:
             body += f"> [**PDF**]({data.pdf_url})  \n>  \n"
             html += f"<br><b><a href=\"{data.pdf_url}\">PDF</a></b>"
-        html += f"</td>"
+        html += "</td>"
         # Picture
         if data.thumbnail:
             html += (
